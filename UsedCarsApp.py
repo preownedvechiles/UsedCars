@@ -4,7 +4,7 @@ import sqlite3
 import os
 import smtplib
 import random
-import bcrypt
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from PIL import Image
@@ -223,7 +223,7 @@ if st.session_state.logged_in:
             city = st.selectbox("City", states.get(state, []))
             features = st.multiselect("Features", features_options)
             contact = st.text_input("Contact Number")
-            images = st.file_uploader("Upload Images", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+            images = st.file_uploader("Upload Images Max 5", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
             # Ensure this line is inside the form block
             submitted = st.form_submit_button("Add Car")

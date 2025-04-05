@@ -14,6 +14,24 @@ image_dir = "images"
 if not os.path.exists(image_dir):
     os.makedirs(image_dir)
 
+folder_name = "images"  # Change this to your desired folder name
+
+# Check if the folder exists
+if not os.path.exists(folder_name):
+    os.makedirs(folder_name)
+    print(f"Folder '{folder_name}' created.")
+else:
+    print(f"Folder '{folder_name}' already exists.")
+
+    folder_name1 = "uploads"  # Change this to your desired folder name
+
+# Check if the folder exists
+if not os.path.exists(folder_name1):
+    os.makedirs(folder_name1)
+    print(f"Folder '{folder_name1}' created.")
+else:
+    print(f"Folder '{folder_name1}' already exists.")
+
 # Database connection
 def connect_db():
     return sqlite3.connect("used_cars.db", check_same_thread=False)
@@ -359,4 +377,3 @@ with connect_db() as conn:
 
         # Display Contact Info
         st.markdown(f"📞 **Contact at**: {row['contact']} or ✉️ **Email:** {row['email']}")
-

@@ -192,9 +192,7 @@ features_options = [
 # Sidebar Filter Panel (Always visible)
 with st.sidebar:
     st.header("\U0001F50D Filter Cars")
-    selected_make = st.selectbox("Make", ["All"] + list(makes.keys()))
-
-    # Select Make (with session state to update dynamically)
+       # Select Make (with session state to update dynamically)
    
     selected_make = st.selectbox("Make", ["All"] + list(makes.keys()), key="make")
 

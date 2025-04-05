@@ -124,7 +124,7 @@ makes =  {
     "Land Rover": ["Defender", "Discovery", "Range Rover Evoque"],
 }
 
-states = states = {
+states =  {
     "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Tirupati", "Kakinada", "Rajahmundry"],
     "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro", "Bomdila"],
     "Assam": ["Guwahati", "Dibrugarh", "Silchar", "Jorhat", "Tezpur", "Nagaon"],
@@ -175,23 +175,39 @@ features_options = [
 with st.sidebar:
     st.header("\U0001F50D Filter Cars")
     selected_make = st.selectbox("Make", ["All"] + list(makes.keys()))
-    selected_model = st.selectbox("Model", ["All"] + makes.get(selected_make, []))
+
+    # Select Make (with session state to update dynamically)
+   
+    selected_make = st.selectbox("Make", ["All"] + list(makes.keys()), key="make")
+
+    # 🔹 Update Model dynamically
+    model_options = ["All"] if selected_make == "All" else ["All"] + makes[selected_make]
+    selected_model = st.selectbox("Model", model_options, key="model")
+
+    # Other Filters
     selected_fuel = st.selectbox("Fuel", ["All", "Petrol", "Diesel", "EV"])
     selected_kilometers = st.selectbox("Kilometers Driven", ["All"] + kilometers_options)
     selected_owners = st.selectbox("Number of Owners", ["All"] + owners_options)
-    selected_state = st.selectbox("State", ["All"] + list(states.keys()))
-    selected_city = st.selectbox("City", ["All"] + states.get(selected_state, []))
 
-# Sidebar Login Panel
+    # 🔹 Select State (with session state to update dynamically)
+    selected_state = st.selectbox("State", ["All"] + list(states.keys()), key="state")
+
+    # 🔹 Update City dynamically based on state
+    city_options = ["All"] if selected_state == "All" else ["All"] + states[selected_state]
+    selected_city = st.selectbox("City", city_options, key="city")
+
+# ℹ️ Sidebar Contact Info
 st.info("📞 For any queries with the website, Contact us at: **+91 8660356670** or ✉️ Email us at **[usedcars.pov@gmail.com](mailto:usedcars.pov@gmail.com)**")
+
 
 with st.sidebar:
     if not st.session_state.logged_in:
-        st.header("\U0001F511 Login")
-        email = st.text_input("Enter your email")
+        st.header("\U0001F511 Login")  # Correct indentation
+        email = st.text_input("Enter your email")  
         if st.button("Send OTP"):
             if send_otp(email):
                 st.success("OTP sent successfully!")
+
         otp = st.text_input("Enter OTP", type="password")
         if st.button("Login"):
             if authenticate(email, otp):
@@ -200,60 +216,79 @@ with st.sidebar:
                 st.rerun()
             else:
                 st.error("Invalid OTP")
-    else:
-        st.write(f"Logged in as: {st.session_state.email}")
-        if st.button("Logout"):
-            st.session_state.logged_in = False
-            st.session_state.email = ""
-            st.rerun()
 
-# Add Car Form (Visible only if logged in)
-if st.session_state.logged_in:
-    with st.expander("\U0001F4DD Add Your Car", expanded=False):
-        with st.form("add_car_form"):
-            make = st.selectbox("Make", list(makes.keys()))
-            model = st.selectbox("Model", makes.get(make, []))
-            year = st.number_input("Year", min_value=1990, max_value=2025, step=1)
-            fuel = st.selectbox("Fuel", ["Petrol", "Diesel", "EV"])
-            kilometers = st.selectbox("Kilometers Driven", kilometers_options)
-            owners = st.selectbox("Number of Owners", owners_options)
-            color = st.text_input("Color")
-            price = st.number_input("Price", min_value=0, step=1000)
-            state = st.selectbox("State", list(states.keys()))
-            city = st.selectbox("City", states.get(state, []))
-            features = st.multiselect("Features", features_options)
-            contact = st.text_input("Contact Number")
-            images = st.file_uploader("Upload Images Max 5", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+    st.write(f"Logged in as: {st.session_state.email}")
+    if st.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.email = ""
+        st.experimental_set_query_params(logged_in="false")  # Reset URL state
 
-            # Ensure this line is inside the form block
-            submitted = st.form_submit_button("Add Car")
 
-            if submitted:
-                if not contact.isdigit() or len(contact) != 10:
-                    st.error("Please enter a valid 10-digit mobile number.")
-                else:
-                    image_paths = []
-                    for image in images:
-                        image_path = os.path.join(image_dir, image.name)
-                        with open(image_path, "wb") as f:
-                            f.write(image.getbuffer())
-                        image_paths.append(image_path)
+# Display filters only if logged in
+if st.session_state.get("logged_in", False):
+    with st.expander("Select Make & City", expanded=False):
+        st.subheader("Select Your Preferences")
+
+        # Make and State selection outside the form for dynamic updates
+        make = st.selectbox("Make", ["Select Make"] + list(makes.keys()), key="make_select")
+        st.session_state.selected_make = make if make != "Select Make" else None
+
+        # Model and City selection based on Make and State
+        model_options = makes.get(st.session_state.selected_make, [])
+        model_disabled = not model_options
+        model = st.selectbox("Model", ["Select Model"] + model_options, key="model_select", disabled=model_disabled)
+        st.session_state.selected_model = model if model != "Select Model" else None
+
+        state = st.selectbox("State", ["Select State"] + list(states.keys()), key="state_select")
+        st.session_state.selected_state = state if state != "Select State" else None
+
+        city_options = states.get(st.session_state.selected_state, [])
+        city_disabled = not city_options
+        city = st.selectbox("City", ["Select City"] + city_options, key="city_select", disabled=city_disabled)
+        st.session_state.selected_city = city if city != "Select City" else None
+
+
+    with st.form("add_car_form"):
+      with st.expander("+ Add Car Details", expanded=False):
+
+
+        year = st.number_input("Year", min_value=1990, max_value=2025, step=1)
+        fuel = st.selectbox("Fuel", ["Petrol", "Diesel", "EV"])
+        kilometers = st.selectbox("Kilometers Driven", kilometers_options)
+        owners = st.selectbox("Number of Owners", owners_options)
+        color = st.text_input("Color")
+        price = st.number_input("Price", min_value=0, step=1000)
+        features = st.multiselect("Features", features_options)
+        contact = st.text_input("Contact Number")
+        images = st.file_uploader("Upload Images", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+
+        submitted = st.form_submit_button("Add Car")
+
+        if submitted:
+            if not contact.isdigit() or len(contact) != 10:
+                st.error("Please enter a valid 10-digit mobile number.")
+            else:
+                image_paths = []
+                for image in images:
+                    image_path = os.path.join("uploads", image.name)
+                    with open(image_path, "wb") as f:
+                        f.write(image.getbuffer())
+                    image_paths.append(image_path)
+
+                with connect_db() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """INSERT INTO cars (make, model, year, fuel, kilometers, owners, color, price, 
+                        state, city, contact, features, email, image_paths) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (st.session_state.selected_make, st.session_state.selected_model, year, fuel,
+                         kilometers, owners, color, price, st.session_state.selected_state,
+                         st.session_state.selected_city, contact, ",".join(features),
+                         st.session_state.email, ",".join(image_paths))
+                    )
+                    conn.commit()
+                    st.success("✅ Car added successfully!")
                     
-                    with connect_db() as conn:
-                        cursor = conn.cursor()
-                        cursor.execute(
-                            """INSERT INTO cars (make, model, year, fuel, kilometers, owners, color, price, 
-                            state, city, contact, features, email, image_paths) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (make, model, year, fuel, kilometers, owners, color, price, state, city, 
-                            contact, ",".join(features), st.session_state.email, ",".join(image_paths))
-                        )
-                        conn.commit()
-                        st.success("Car added successfully!")
-                        st.rerun()
-
-
-
 
 
 # Display user's posts in a separate tab
@@ -282,6 +317,8 @@ if st.session_state.logged_in:
                             conn.commit()
                         st.success("Post deleted successfully!")
                         st.rerun()
+
+
 # Display Car Listings
 st.header("\U0001F4C8 Car Listings")
 filter_query = "SELECT * FROM cars WHERE 1=1"
